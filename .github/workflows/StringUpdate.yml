@@ -90,7 +90,7 @@ jobs:
               curl -L -X GET \
               -H "authorization: Bearer ${access_token}" \
               "https://api.box.com/2.0/files/${string_file_id}/content" | \
-              sed s/\r/\n/g
+              sed 's/\r$/\n$/'
             )
 
             cd $WORKSPACE
