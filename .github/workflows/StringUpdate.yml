@@ -90,7 +90,7 @@ jobs:
               curl -L -X GET \
               -H "authorization: Bearer ${access_token}" \
               "https://api.box.com/2.0/files/${string_file_id}/content" | \
-              sed 's/\r$/\n$/'
+              sed 's/\r/\n/g'
             )
 
             cd $WORKSPACE
@@ -115,6 +115,7 @@ jobs:
           WORKSPACE: ${{ github.workspace }}
           CURRENT_TIME: ${{ env.CURRENT_TIME }}
         run: |
+          git config -l
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git checkout -b "Update_string_resources"
