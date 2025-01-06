@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "StringUpdate"
 include(":app")
-include(":androidCore")
+include(":core:androidCore")
