@@ -1,0 +1,134 @@
+name: StringUpdate
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  download-files:
+    runs-on: ubuntu-latest-16
+    timeout-minutes: 10
+    permissions: write-all
+    env:
+      GRANT_TYPE: ${{ secrets.BOX_GRANT_TYPE }}
+      CLIENT_ID: ${{ secrets.BOX_CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.BOX_CLIENT_SECRET }}
+      BOX_SUBJECT_TYPE: ${{ secrets.BOX_SUBJECT_TYPE }}
+      BOX_SUBJECT_ID: ${{ secrets.BOX_SUBJECT_ID }}
+      BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # https://ja.developer.box.com/reference/post-oauth2-token/
+      - id: post_access_token
+        name: Post access token (API)
+        run: |
+          response=$(curl -s -X POST \
+          -H "Content-Type:application/x-www-form-urlencoded" \
+          -d "grant_type=${GRANT_TYPE}" \
+          -d "client_id=${CLIENT_ID}" \
+          -d "client_secret=${CLIENT_SECRET}" \
+          -d "box_subject_type=${BOX_SUBJECT_TYPE}" \
+          -d "box_subject_id=${BOX_SUBJECT_ID}" \
+          'https://api.box.com/oauth2/token')
+          echo "::set-output name=response::$response"
+
+      - id: extract_access_token
+        name: Extract access token
+        run: |
+          echo access_token="${{ fromJson(steps.post_access_token.outputs.response).access_token }}" >> $GITHUB_OUTPUT
+
+      # https://ja.developer.box.com/reference/get-folders-id-items/
+      - id: get_target_directory_id
+        name: Get target directory id (API)
+        run: |
+          response=$(curl -s -X GET \
+          -H "Authorization:Bearer ${{ steps.extract_access_token.outputs.access_token }}" \
+          'https://api.box.com/2.0/folders/229483432502/items?limit=1&sort=date&direction=DESC')
+          echo "::set-output name=response::$response"
+
+      - id: extract_target_directory_id
+        name: Extract target directory id
+        run: |
+          target_directory_id=$(echo "${{ fromJson(steps.get_target_directory_id.outputs.response).entries[0].id }}")
+          echo target_directory_id=$target_directory_id >> $GITHUB_OUTPUT
+
+      - id: download_files
+        name: Download files (API)
+        env:
+          access_token: ${{ steps.extract_access_token.outputs.access_token }}
+          target_directory_id: ${{ steps.extract_target_directory_id.outputs.target_directory_id }}
+          WORKSPACE: ${{ github.workspace }}
+        run: |
+          response=$(
+            curl -s -X GET \
+            -H "Authorization:Bearer ${access_token}" \
+            "https://api.box.com/2.0/folders/${target_directory_id}/items"
+          )
+
+          for language_directory in $(echo $response | jq -c ".entries[]"); do
+            language=$(echo "${language_directory}" | jq ".name" | tr -d '"')
+            language_directory_id=$(echo "${language_directory}" | jq ".id" | tr -d '"')
+            string_file_id=$(
+              curl -s -X GET \
+              -H "Authorization:Bearer ${access_token}" \
+              "https://api.box.com/2.0/folders/${language_directory_id}/items" | \
+              jq -c ".entries[].id" | \
+              tr -d '"'
+            )
+
+            file=$(
+              curl -L -X GET \
+              -H "authorization: Bearer ${access_token}" \
+              "https://api.box.com/2.0/files/${string_file_id}/content" | \
+              sed s/\r/\n/g
+            )
+
+            cd $WORKSPACE
+            if [ "$language" == "en" ]; then
+              cd "core/androidCore/src/main/res/values/"
+            elif [ "$language" == "zh_TW" ]; then
+              cd "core/androidCore/src/main/res/values-zh-rTW/"
+            else
+              cd "core/androidCore/src/main/res/values-${language}/" 
+            fi
+            echo $file > "mr-string.xml"
+          
+          done
+
+      - name: Set time
+        env:
+          TZ: "Asia/Tokyo"
+        run: echo "CURRENT_TIME=$(date +"%Y%m%d_%H")" >> $GITHUB_ENV
+
+      - name: Commit files
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          CURRENT_TIME: ${{ env.CURRENT_TIME }}
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git checkout -b "Update_string_resources"
+          git add .
+          git commit -m "Update string resources ${CURRENT_TIME}"
+          git push -f -u origin "Update_string_resources"
+
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_TIME: ${{ env.CURRENT_TIME }}
+        run: |
+          gh pr create \
+            --draft \
+            --base "MRAND-1335_String_update" \
+            --head "Update_string_resources" \
+            --title "Update string resources ${CURRENT_TIME}" \
+            --body "This PR was automatically created by GitHub Actions to update string resources."
