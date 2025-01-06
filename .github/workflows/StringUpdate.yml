@@ -43,20 +43,15 @@ jobs:
 
       - id: extract_access_token
         name: Extract access token
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          access_token="${{ fromJson(steps.post_access_token.outputs.response).access_token }}"
-          gh secret set BOX_ACCESS_TOKEN -b $access_token
+          echo access_token="${{ fromJson(steps.post_access_token.outputs.response).access_token }}" >> $GITHUB_OUTPUT
 
       # https://ja.developer.box.com/reference/get-folders-id-items/
       - id: get_target_directory_id
         name: Get target directory id (API)
-        env:
-          BOX_ACCESS_TOKEN: ${{ secrets.BOX_ACCESS_TOKEN }}
         run: |
           response=$(curl -s -X GET \
-          -H "Authorization:Bearer ${BOX_ACCESS_TOKEN}" \
+          -H "Authorization:Bearer ${{ steps.extract_access_token.outputs.access_token }}" \
           'https://api.box.com/2.0/folders/229483432502/items?limit=1&sort=date&direction=DESC')
           echo "::set-output name=response::$response"
 
