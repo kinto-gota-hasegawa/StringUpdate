@@ -90,7 +90,7 @@ jobs:
               curl -L -X GET \
               -H "authorization: Bearer ${access_token}" \
               "https://api.box.com/2.0/files/${string_file_id}/content" | \
-              sed 's/\r$/\n$/'
+              sed 's/\r/\n/g'
             )
 
             cd $WORKSPACE
@@ -115,6 +115,7 @@ jobs:
           WORKSPACE: ${{ github.workspace }}
           CURRENT_TIME: ${{ env.CURRENT_TIME }}
         run: |
+          git config -l
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git checkout -b "Update_string_resources"
@@ -126,10 +127,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CURRENT_TIME: ${{ env.CURRENT_TIME }}
+          BASE_BRANCH: ${{ github.ref_name }}
         run: |
           gh pr create \
             --draft \
-            --base "main" \
+            --base "$BASE_BRANCH" \
             --head "Update_string_resources" \
             --title "Update string resources ${CURRENT_TIME}" \
             --body "This PR was automatically created by GitHub Actions to update string resources."
