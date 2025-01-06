@@ -128,7 +128,7 @@ jobs:
         run: |
           gh pr create \
             --draft \
-            --base "MRAND-1335_String_update" \
+            --base "main" \
             --head "Update_string_resources" \
             --title "Update string resources ${CURRENT_TIME}" \
             --body "This PR was automatically created by GitHub Actions to update string resources."
