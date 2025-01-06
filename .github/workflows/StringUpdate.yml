@@ -14,13 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: write-all
-    env:
-      GRANT_TYPE: ${{ secrets.BOX_GRANT_TYPE }}
-      CLIENT_ID: ${{ secrets.BOX_CLIENT_ID }}
-      CLIENT_SECRET: ${{ secrets.BOX_CLIENT_SECRET }}
-      BOX_SUBJECT_TYPE: ${{ secrets.BOX_SUBJECT_TYPE }}
-      BOX_SUBJECT_ID: ${{ secrets.BOX_SUBJECT_ID }}
-      BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
 
     steps:
 
@@ -30,6 +23,12 @@ jobs:
       # https://ja.developer.box.com/reference/post-oauth2-token/
       - id: post_access_token
         name: Post access token (API)
+        env:
+          GRANT_TYPE: ${{ secrets.BOX_GRANT_TYPE }}
+          CLIENT_ID: ${{ secrets.BOX_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.BOX_CLIENT_SECRET }}
+          BOX_SUBJECT_TYPE: ${{ secrets.BOX_SUBJECT_TYPE }}
+          BOX_SUBJECT_ID: ${{ secrets.BOX_SUBJECT_ID }}
         run: |
           response=$(curl -s -X POST \
           -H "Content-Type:application/x-www-form-urlencoded" \
@@ -49,10 +48,12 @@ jobs:
       # https://ja.developer.box.com/reference/get-folders-id-items/
       - id: get_target_directory_id
         name: Get target directory id (API)
+        env:
+          BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
           response=$(curl -s -X GET \
           -H "Authorization:Bearer ${{ steps.extract_access_token.outputs.access_token }}" \
-          'https://api.box.com/2.0/folders/229483432502/items?limit=1&sort=date&direction=DESC')
+          'https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC')
           echo "::set-output name=response::$response"
 
       - id: extract_target_directory_id
