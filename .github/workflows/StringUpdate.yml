@@ -86,12 +86,15 @@ jobs:
               jq -c ".entries[].id" | \
               tr -d '"'
             )
+          
+            echo ${string_file_id}
 
             file=$(
               curl -L -X GET \
               -H "authorization: Bearer ${access_token}" \
               "https://api.box.com/2.0/files/${string_file_id}/content" | \
-              sed 's/\r/\n/g'
+              sed 's/\r//g' | \
+              sed 's/>/>\\\\n/g' \
             )
 
             cd $WORKSPACE
@@ -103,6 +106,8 @@ jobs:
               cd "core/androidCore/src/main/res/values-${language}/" 
             fi
             echo $file > "mr-string.xml"
+          
+            cat -e "mr-string.xml"
           
           done
 
