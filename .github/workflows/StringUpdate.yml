@@ -61,6 +61,7 @@ jobs:
       - id: extract_target_directory_id
         name: Extract target directory id
         run: |
+          echo "${{ steps.get_target_directory_id.outputs.response }}"
           target_directory_id=$(echo "${{ fromJson(steps.get_target_directory_id.outputs.response).entries[0].id }}")
           echo target_directory_id=$target_directory_id >> $GITHUB_OUTPUT
 
