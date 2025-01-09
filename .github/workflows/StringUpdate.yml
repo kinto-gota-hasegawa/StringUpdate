@@ -60,11 +60,8 @@ jobs:
       - id: extract_target_directory_id
         name: Extract target directory id
         run: |
-          echo "extract_target_directory_id1"
           target_directory_id=$(echo "${{ fromJson(steps.get_target_directory_id.outputs.response).entries[0].id }}")
-          echo "extract_target_directory_id2"
           echo target_directory_id=$target_directory_id >> $GITHUB_OUTPUT
-          echo "extract_target_directory_id3"
 
       - id: download_files
         name: Download files (API)
