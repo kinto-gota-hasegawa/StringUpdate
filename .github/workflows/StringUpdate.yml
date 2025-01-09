@@ -44,8 +44,7 @@ jobs:
       - id: extract_access_token
         name: Extract access token
         run: |
-          echo access_token="${{ fromJson(steps.post_access_token.outputs.response).access_token }}"
-          echo "::add-mask::${access_token}"
+          echo access_token="::add-mask::${{ fromJson(steps.post_access_token.outputs.response).access_token }}"
           echo access_token="${access_token}" >> $GITHUB_OUTPUT
 
       # https://ja.developer.box.com/reference/get-folders-id-items/
