@@ -56,7 +56,7 @@ jobs:
           response=$(curl -s -X GET \
           -H "Authorization:Bearer ${{ steps.extract_access_token.outputs.access_token }}" \
           "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC")
-          echo $response
+          echo "${response}"
           echo "::set-output name=response::$response"
 
       - id: extract_target_directory_id
