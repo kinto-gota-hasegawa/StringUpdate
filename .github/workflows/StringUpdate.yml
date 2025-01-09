@@ -53,8 +53,8 @@ jobs:
         env:
           BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
-          echo "DEBUG" >> $GITHUB_ENV
           echo "get_target_directory_id1"
+          echo "${{ steps.extract_access_token.outputs.access_token }}"
           response=$(curl -s -X GET \
           -H "Authorization:Bearer ${{ steps.extract_access_token.outputs.access_token }}" \
           "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC")
