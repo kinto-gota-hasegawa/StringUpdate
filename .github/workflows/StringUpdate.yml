@@ -44,7 +44,7 @@ jobs:
       - id: extract_access_token
         name: Extract access token
         run: |
-          echo access_token="::add-mask::${{ fromJson(steps.post_access_token.outputs.response).access_token }}"
+          echo access_token="${{ fromJson(steps.post_access_token.outputs.response).access_token }}"
           echo access_token="${access_token}" >> $GITHUB_OUTPUT
 
       # https://ja.developer.box.com/reference/get-folders-id-items/
@@ -53,10 +53,13 @@ jobs:
         env:
           BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
+          echo "DEBUG" >> $GITHUB_ENV
+          echo "get_target_directory_id1"
           response=$(curl -s -X GET \
           -H "Authorization:Bearer ${{ steps.extract_access_token.outputs.access_token }}" \
           "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC")
           echo "${response}"
+          echo "get_target_directory_id2"
           echo "::set-output name=response::$response"
 
       - id: extract_target_directory_id
