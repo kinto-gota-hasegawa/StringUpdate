@@ -52,21 +52,19 @@ jobs:
         env:
           BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
-          echo "get_target_directory_id1"
-          echo "${{ steps.extract_access_token.outputs.access_token }}"
           response=$(curl -s -X GET \
           -H "Authorization:Bearer ${{ steps.extract_access_token.outputs.access_token }}" \
           "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC")
-          echo "${response}"
-          echo "get_target_directory_id2"
           echo "::set-output name=response::$response"
 
       - id: extract_target_directory_id
         name: Extract target directory id
         run: |
-          echo "${{ steps.get_target_directory_id.outputs.response }}"
+          echo "extract_target_directory_id1"
           target_directory_id=$(echo "${{ fromJson(steps.get_target_directory_id.outputs.response).entries[0].id }}")
+          echo "extract_target_directory_id2"
           echo target_directory_id=$target_directory_id >> $GITHUB_OUTPUT
+          echo "extract_target_directory_id3"
 
       - id: download_files
         name: Download files (API)
