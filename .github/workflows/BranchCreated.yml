@@ -1,0 +1,26 @@
+name: StringUpdate
+
+on:
+  create:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and Push
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+
+    if:
+      contains( github.ref_name, 'release/' ) ||
+      contains( github.ref_name, 'topic/' )
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: main logic
+        run: echo "---------------------------------main logic---------------------------------"
