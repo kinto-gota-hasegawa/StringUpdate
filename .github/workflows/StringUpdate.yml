@@ -89,12 +89,6 @@ jobs:
           
             echo ${string_file_id}
 
-            file="$(
-              curl -L -X GET \
-              -H "authorization: Bearer ${access_token}" \
-              "https://api.box.com/2.0/files/${string_file_id}/content" | \
-            )"
-
             cd $WORKSPACE
             if [ "$language" == "en" ]; then
               cd "core/androidCore/src/main/res/values/"
@@ -103,9 +97,10 @@ jobs:
             else
               cd "core/androidCore/src/main/res/values-${language}/" 
             fi
-            echo $file > "mr-string.xml"
           
-            cat -e "mr-string.xml"
+            curl -L -X GET \
+            -H "authorization: Bearer ${access_token}" \
+            "https://api.box.com/2.0/files/${string_file_id}/content" > "mr-string.xml"
           
           done
 
