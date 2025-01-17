@@ -20,7 +20,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # https://ja.developer.box.com/reference/post-oauth2-token/
       - id: get_access_token
         name: Get Access Token (API)
         env:
@@ -44,7 +43,6 @@ jobs:
           echo "::add-mask::${access_token}"
           echo "access_token=${access_token}" >> $GITHUB_OUTPUT  
 
-      # https://ja.developer.box.com/reference/get-folders-id-items/
       - id: get_target_directory_id
         name: Get target directory id (API)
         env:
@@ -100,7 +98,7 @@ jobs:
           
             curl -L -X GET \
             -H "authorization: Bearer ${access_token}" \
-            "https://api.box.com/2.0/files/${string_file_id}/content" > "mr-string.xml"
+            "https://api.box.com/2.0/files/${string_file_id}/content" > "ma-string.xml"
           
           done
 
