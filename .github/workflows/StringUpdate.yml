@@ -58,11 +58,12 @@ jobs:
       - id: get_target_directory_id
         name: Get target directory id (API)
         env:
+          access_token: ${{ steps.get_access_token.outputs.access_token }}
           BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
           response=$(
             curl -s -X GET \
-            -H "Authorization:Bearer ${{ steps.get_access_token.outputs.access_token }}" \
+            -H "Authorization:Bearer ${access_token}" \
             "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC"
           )
           
