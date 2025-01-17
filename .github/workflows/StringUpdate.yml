@@ -73,6 +73,7 @@ jobs:
           fi
           
           target_directory_id=$(jq -r ".entries[0].id" <<< "$response")
+          target_directory_name=$(jq -r ".entries[0].name" <<< "$response")
           
           if [ -z "$target_directory_id" ] || [ "$target_directory_id" == "null" ]; then
             echo "::error::Failed to retrieve target_directory_id correctly."
@@ -81,6 +82,7 @@ jobs:
           
           echo "::add-mask::${target_directory_id}"
           echo "target_directory_id=${target_directory_id}" >> $GITHUB_OUTPUT
+          echo "target_directory_name=${target_directory_name}"
 
       - id: download_files
         name: Download files (API)
@@ -104,12 +106,20 @@ jobs:
             language=$(echo "${language_directory}" | jq -r ".name")
             language_directory_id=$(echo "${language_directory}" | jq -r ".id")
 
-            string_file_id=$(
+            ma_string_file_info=$(
               curl -s -X GET \
               -H "Authorization:Bearer ${access_token}" \
               "https://api.box.com/2.0/folders/${language_directory_id}/items" | \
-              jq -r ".entries[0].id"
+              jq -c '.entries[0] | {name: .name, id: .id}'
             )
+  
+            file_name=$(jq -r ".name" <<< $ma_string_file_info)
+            if [ "$file_name" != "strings.xml" ]; then
+              echo "::error::string.xml not found. Did you generated the language files targeting Android?"
+              exit 1
+            fi
+  
+            string_file_id=$(jq -r '.id' <<< "$ma_string_file_info")
             echo "::add-mask::${string_file_id}"
 
             cd $WORKSPACE
