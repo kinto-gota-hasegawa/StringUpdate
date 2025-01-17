@@ -12,7 +12,7 @@ permissions: {}
 jobs:
   download-files:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     permissions: write-all
 
     steps:
@@ -42,7 +42,7 @@ jobs:
             jq -r ".access_token"
           )
           echo "::add-mask::${access_token}"
-          echo "::set-output name=access_token::$access_token"
+          echo "access_token=${access_token}" >> $GITHUB_OUTPUT  
 
       # https://ja.developer.box.com/reference/get-folders-id-items/
       - id: get_target_directory_id
@@ -57,7 +57,7 @@ jobs:
             jq -r ".entries[0].id"
           )
           echo "::add-mask::${target_directory_id}"
-          echo "::set-output name=target_directory_id::$target_directory_id"
+          echo "target_directory_id=${target_directory_id}" >> $GITHUB_OUTPUT
 
       - id: download_files
         name: Download files (API)
