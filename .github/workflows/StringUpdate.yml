@@ -29,7 +29,7 @@ jobs:
           BOX_SUBJECT_TYPE: ${{ secrets.BOX_SUBJECT_TYPE }}
           BOX_SUBJECT_ID: ${{ secrets.BOX_SUBJECT_ID }}
         run: |
-          access_token=$(
+          response=$(
             curl --fail -s -X POST \
             -H "Content-Type:application/x-www-form-urlencoded" \
             -d "grant_type=${GRANT_TYPE}" \
@@ -37,11 +37,19 @@ jobs:
             -d "client_secret=${CLIENT_SECRET}" \
             -d "box_subject_type=${BOX_SUBJECT_TYPE}" \
             -d "box_subject_id=${BOX_SUBJECT_ID}" \
-            'https://api.box.com/oauth2/token' | \
-            jq -r ".access_token"
+            'https://api.box.com/oauth2/token'
           )
+
+          if [ $? -ne 0 ]; then
+            echo "::error::Failed to api call. response was $response"
+            exit 1
+          fi
           
-          if [ $? -ne 0 ] || [ -z "$access_token" ] || [ "$access_token" == "null" ]; then
+          echo $response
+          
+          access_token=$(jq -r ".access_token" <<< "$response")
+          
+          if [ -z "$access_token" ] || [ "$access_token" == "null" ]; then
             echo "::error::Failed to retrieve access token correctly."
             exit 1
           fi
