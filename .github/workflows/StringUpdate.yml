@@ -45,8 +45,6 @@ jobs:
             exit 1
           fi
           
-          echo $response
-          
           access_token=$(jq -r ".access_token" <<< "$response")
           
           if [ -z "$access_token" ] || [ "$access_token" == "null" ]; then
