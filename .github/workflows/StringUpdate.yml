@@ -50,22 +50,20 @@ jobs:
         env:
           BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
-          response=$(curl -s -X GET \
-          -H "Authorization:Bearer ${{ steps.get_access_token.outputs.access_token }}" \
-          "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC")
-          echo "::set-output name=response::$response"
-
-      - id: extract_target_directory_id
-        name: Extract target directory id
-        run: |
-          target_directory_id=$(echo "${{ fromJson(steps.get_target_directory_id.outputs.response).entries[0].id }}")
-          echo target_directory_id=$target_directory_id >> $GITHUB_OUTPUT
+          target_directory_id=$(
+            curl -s -X GET \
+            -H "Authorization:Bearer ${{ steps.get_access_token.outputs.access_token }}" \
+            "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC" | \
+            jq -r ".entries[0].id"
+          )
+          echo "::add-mask::${target_directory_id}"
+          echo "::set-output name=target_directory_id::$target_directory_id"
 
       - id: download_files
         name: Download files (API)
         env:
           access_token: ${{ steps.get_access_token.outputs.access_token }}
-          target_directory_id: ${{ steps.extract_target_directory_id.outputs.target_directory_id }}
+          target_directory_id: ${{ steps.get_target_directory_id.outputs.target_directory_id }}
           WORKSPACE: ${{ github.workspace }}
         run: |
           response=$(
