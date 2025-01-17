@@ -21,8 +21,8 @@ jobs:
         uses: actions/checkout@v4
 
       # https://ja.developer.box.com/reference/post-oauth2-token/
-      - id: post_access_token
-        name: Post access token (API)
+      - id: get_access_token
+        name: Get Access Token (API)
         env:
           GRANT_TYPE: ${{ secrets.BOX_GRANT_TYPE }}
           CLIENT_ID: ${{ secrets.BOX_CLIENT_ID }}
@@ -30,21 +30,18 @@ jobs:
           BOX_SUBJECT_TYPE: ${{ secrets.BOX_SUBJECT_TYPE }}
           BOX_SUBJECT_ID: ${{ secrets.BOX_SUBJECT_ID }}
         run: |
-          response=$(curl -s -X POST \
-          -H "Content-Type:application/x-www-form-urlencoded" \
-          -d "grant_type=${GRANT_TYPE}" \
-          -d "client_id=${CLIENT_ID}" \
-          -d "client_secret=${CLIENT_SECRET}" \
-          -d "box_subject_type=${BOX_SUBJECT_TYPE}" \
-          -d "box_subject_id=${BOX_SUBJECT_ID}" \
-          'https://api.box.com/oauth2/token')
-          echo "::add-mask::${response}"
-          echo "::set-output name=response::$response"
-
-      - id: extract_access_token
-        name: Extract access token
-        run: |
-          access_token="$(echo "::add-mask::${{ fromJson(steps.post_access_token.outputs.response).access_token }}")"
+          access_token=$(
+            curl -s -X POST \
+            -H "Content-Type:application/x-www-form-urlencoded" \
+            -d "grant_type=${GRANT_TYPE}" \
+            -d "client_id=${CLIENT_ID}" \
+            -d "client_secret=${CLIENT_SECRET}" \
+            -d "box_subject_type=${BOX_SUBJECT_TYPE}" \
+            -d "box_subject_id=${BOX_SUBJECT_ID}" \
+            'https://api.box.com/oauth2/token' | \
+            jq -r ".access_token"
+          )
+          echo "::add-mask::${access_token}"
           echo "::set-output name=access_token::$access_token"
 
       # https://ja.developer.box.com/reference/get-folders-id-items/
@@ -54,7 +51,7 @@ jobs:
           BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
           response=$(curl -s -X GET \
-          -H "Authorization:Bearer ${{ steps.extract_access_token.outputs.access_token }}" \
+          -H "Authorization:Bearer ${{ steps.get_access_token.outputs.access_token }}" \
           "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC")
           echo "::set-output name=response::$response"
 
@@ -67,7 +64,7 @@ jobs:
       - id: download_files
         name: Download files (API)
         env:
-          access_token: ${{ steps.extract_access_token.outputs.access_token }}
+          access_token: ${{ steps.get_access_token.outputs.access_token }}
           target_directory_id: ${{ steps.extract_target_directory_id.outputs.target_directory_id }}
           WORKSPACE: ${{ github.workspace }}
         run: |
