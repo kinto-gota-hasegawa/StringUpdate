@@ -1,4 +1,4 @@
-name: StringUpdate
+name: CreateStringUpdatePR
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  download-files:
+  CreateStringUpdatePR:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: write-all
@@ -66,21 +66,26 @@ jobs:
           target_directory_id: ${{ steps.get_target_directory_id.outputs.target_directory_id }}
           WORKSPACE: ${{ github.workspace }}
         run: |
-          language_directory_list_response=$(
-            curl -s -X GET \
-            -H "Authorization:Bearer ${access_token}" \
-            "https://api.box.com/2.0/folders/${target_directory_id}/items"
+          language_directory_list=(
+            $(
+              curl -s -X GET \
+              -H "Authorization:Bearer ${access_token}" \
+              "https://api.box.com/2.0/folders/${target_directory_id}/items" | \
+              jq -c '.entries[] | {name: .name, id: .id}'
+            )
           )
-          echo "::add-mask::${language_directory_list_response}"
+          
+          echo "::add-mask::${language_directory_list}"
 
-          for language_directory in $(echo $language_directory_list_response | jq -c ".entries[]"); do
+          for language_directory in "${language_directory_list[@]}"; do
             language=$(echo "${language_directory}" | jq -r ".name")
             language_directory_id=$(echo "${language_directory}" | jq -r ".id")
+
             string_file_id=$(
               curl -s -X GET \
               -H "Authorization:Bearer ${access_token}" \
               "https://api.box.com/2.0/folders/${language_directory_id}/items" | \
-              jq -r ".entries[].id"
+              jq -r ".entries[0].id"
             )
             echo "::add-mask::${string_file_id}"
 
