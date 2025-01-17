@@ -30,7 +30,7 @@ jobs:
           BOX_SUBJECT_ID: ${{ secrets.BOX_SUBJECT_ID }}
         run: |
           response=$(
-            curl --fail -s -X POST \
+            curl --fail-with-body -s -X POST \
             -H "Content-Type:application/x-www-form-urlencoded" \
             -d "grant_type=${GRANT_TYPE}" \
             -d "client_id=${CLIENT_ID}" \
@@ -62,7 +62,7 @@ jobs:
           BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
           response=$(
-            curl -s -X GET \
+            curl --fail-with-body -s -X GET \
             -H "Authorization:Bearer ${access_token}" \
             "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC"
           )
