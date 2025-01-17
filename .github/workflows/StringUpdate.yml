@@ -131,7 +131,7 @@ jobs:
               cd "core/androidCore/src/main/res/values-${language}/" 
             fi
           
-            curl -L -X GET \
+            curl -s -L -X GET \
             -H "authorization: Bearer ${access_token}" \
             "https://api.box.com/2.0/files/${string_file_id}/content" > "ma-string.xml"
           
