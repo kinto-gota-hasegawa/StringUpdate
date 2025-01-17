@@ -48,7 +48,7 @@ jobs:
           access_token=$(jq -r ".access_token" <<< "$response")
           
           if [ -z "$access_token" ] || [ "$access_token" == "null" ]; then
-            echo "::error::Failed to retrieve access token correctly."
+            echo "::error::Failed to retrieve access_token correctly."
             exit 1
           fi
           
@@ -60,14 +60,20 @@ jobs:
         env:
           BOX_STRING_ROOT_DIRECTORY_ID: ${{ secrets.BOX_STRING_ROOT_DIRECTORY_ID }}
         run: |
-          target_directory_id=$(
+          response=$(
             curl -s -X GET \
             -H "Authorization:Bearer ${{ steps.get_access_token.outputs.access_token }}" \
-            "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC" | \
-            jq -r ".entries[0].id"
+            "https://api.box.com/2.0/folders/${BOX_STRING_ROOT_DIRECTORY_ID}/items?limit=1&sort=date&direction=DESC"
           )
           
-          if [ $? -ne 0 ] || [ -z "$target_directory_id" ] || [ "$target_directory_id" == "null" ]; then
+          if [ $? -ne 0 ]; then
+            echo "::error::Failed to api call. response was $response"
+            exit 1
+          fi
+          
+          target_directory_id=$(jq -r ".entries[0].id" <<< "$response")
+          
+          if [ -z "$target_directory_id" ] || [ "$target_directory_id" == "null" ]; then
             echo "::error::Failed to retrieve target_directory_id correctly."
             exit 1
           fi
