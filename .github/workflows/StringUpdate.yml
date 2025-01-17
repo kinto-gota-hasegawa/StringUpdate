@@ -66,24 +66,23 @@ jobs:
           target_directory_id: ${{ steps.get_target_directory_id.outputs.target_directory_id }}
           WORKSPACE: ${{ github.workspace }}
         run: |
-          response=$(
+          language_directory_list_response=$(
             curl -s -X GET \
             -H "Authorization:Bearer ${access_token}" \
             "https://api.box.com/2.0/folders/${target_directory_id}/items"
           )
+          echo "::add-mask::${language_directory_list_response}"
 
-          for language_directory in $(echo $response | jq -c ".entries[]"); do
-            language=$(echo "${language_directory}" | jq ".name" | tr -d '"')
-            language_directory_id=$(echo "${language_directory}" | jq ".id" | tr -d '"')
+          for language_directory in $(echo $language_directory_list_response | jq -c ".entries[]"); do
+            language=$(echo "${language_directory}" | jq -r ".name")
+            language_directory_id=$(echo "${language_directory}" | jq -r ".id")
             string_file_id=$(
               curl -s -X GET \
               -H "Authorization:Bearer ${access_token}" \
               "https://api.box.com/2.0/folders/${language_directory_id}/items" | \
-              jq -c ".entries[].id" | \
-              tr -d '"'
+              jq -r ".entries[].id"
             )
-          
-            echo ${string_file_id}
+            echo "::add-mask::${string_file_id}"
 
             cd $WORKSPACE
             if [ "$language" == "en" ]; then
@@ -110,7 +109,6 @@ jobs:
           WORKSPACE: ${{ github.workspace }}
           CURRENT_TIME: ${{ env.CURRENT_TIME }}
         run: |
-          git config -l
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git checkout -b "Update_string_resources"
